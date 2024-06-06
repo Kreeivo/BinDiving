@@ -28,17 +28,23 @@ function startBinDiving()
 
         ClearPedTasks(playerPed)
 
-        local foundItem = math.random(1, 2) == 1
+        local foundItem = math.random(1, 2) < config.foundChance
+
 
         if foundIteam then
+
+            local itemIndex = math.random(1, #config.foundItems)
+            local foundItemName = config.foundItems[itemIndex]
             TriggerEvent('chat:addMessage', {
                 color = { 0, 255, 0},
                 multiline = true,
-                args = {"Me", "You Found Something in the Bin!"}
+                args = {"Me", "You Found a " .. foundItemName "in the Bin!"}
             })
 
-            GiveWeaponToPed(playerPed, config.weaponHash, 0, false, true)
-            while not HasWeaponAssetLoaded(config.weaponHash) do
+            local foundHash = GetHashKey(foundItemName)
+
+            GiveWeaponToPed(playerPed, foundHash, 0, false, true)
+            while not HasWeaponAssetLoaded(foundHash) do
                 Citizen.Wait(0)
             end
 
