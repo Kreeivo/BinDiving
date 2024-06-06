@@ -1,72 +1,44 @@
-local config = require("config")
+CreateThread(function()
+    while true do
+        Wait(5)
 
-
-
-
-function GetClosestBin()
-    local playerPed = PlayerPedID()
-    local playerPos = GetEntityCoords(playerPed)
-    local binModelHash = config.binHash
-
-    local closestBin = GetClosestObjectOfType(playerPos.x, playerPos.y, playerPos.z, config.interactRadius, binModelHash, false, false, true)
-
-    if DoesEntityExist(closestBin) then
-        return closestBin
-    else
-        return nil
-    end
-end
-
-function startBinDiving()
-    local closestBin = getClosestBin()
-    if closestBin then
-        local playerPed = PlayerPedID()
-
-        TaskStartScenarioInPlace(playerPed, 'PROP_HUMAN_BUM_BIN', 0, true)
-
-        Citizen.wait(config.interval)
-
-        ClearPedTasks(playerPed)
-
-        local foundItem = math.random(1, 2) < config.foundChance
-
-
-        if foundIteam then
-
-            local itemIndex = math.random(1, #config.foundItems)
-            local foundItemName = config.foundItems[itemIndex]
-            TriggerEvent('chat:addMessage', {
-                color = { 0, 255, 0},
-                multiline = true,
-                args = {"Me", "You Found a " .. foundItemName "in the Bin!"}
-            })
-
-            local foundHash = GetHashKey(foundItemName)
-
-            GiveWeaponToPed(playerPed, foundHash, 0, false, true)
-            while not HasWeaponAssetLoaded(foundHash) do
-                Citizen.Wait(0)
+        if IsControlJustReleased(1, Config.interact) then
+            -- Checking for closest bin
+            local closestBin = nil
+            local playerPos = GetEntityCoords(PlayerPedID())
+            local isBinClose = GetClosestObjectOfType(playerPos.x, playerPos.y, playerPos.z, Config.interactRadius,
+                Config.binHash, false, false, true)
+            if DoesEntityExist(isBinClose) then
+                closestBin = isBinClose
             end
 
-        end
+            if closestBin then
+                TaskStartScenarioInPlace(PlayerPedID(), 'PROP_HUMAN_BUM_BIN', 0, true) -- call playerpedid twice as the ped id can change and you are waiting in between uses this ensures its the correct ped id
 
+                Wait(Config.interval)
 
-    else
+                ClearPedTasks(PlayerPedID())
 
-        TriggerEvent('chat:addMessage', {
-            color = { 255, 0, 0},
-            multiline = true,
-            args = {"Me", "No Bin found nearby"}
-        })
-    end
-end
-
-Citizen.CreateThread(function()
-    while true do
-    config.interval =Citizen.Wait(0)
-
-        if IsControlJustReleased(1, config.interact) then
-            startBinDiving()
+                if math.random(1, 2) < Config.foundChance then
+                    local foundItemName = Config.foundItems[math.random(1, #Config.foundItems)]
+                    TriggerEvent('chat:addMessage', {
+                        color = { 0, 255, 0 },
+                        multiline = true,
+                        args = { "Me", "You Found a " .. foundItemName "in the Bin!" }
+                    })
+                    local foundHash = GetHashKey(foundItemName)
+                    GiveWeaponToPed(playerPed, foundHash, 0, false, true)
+                    while not HasWeaponAssetLoaded(foundHash) do
+                        Wait(20)
+                    end
+                end
+            else
+                TriggerEvent('chat:addMessage', {
+                    color = { 255, 0, 0 },
+                    multiline = true,
+                    args = { "Me", "No Bin found nearby" }
+                })
+            end
         end
     end
 end)
